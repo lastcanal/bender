@@ -12,7 +12,7 @@ defmodule Bender.CommandTest do
 
   test "it pattern matches a command" do
     {:ok, manager} = GenEvent.start_link
-    GenEvent.add_handler(manager, MyCommand, self)
+    GenEvent.add_handler(manager, MyCommand, self())
 
     GenEvent.notify(manager, {{:command, "my_command", "hello world"}, {}})
     assert_receive :MY_COMMAND, 100
@@ -20,7 +20,7 @@ defmodule Bender.CommandTest do
 
   test "does not crash for commands that don't match" do
     {:ok, manager} = GenEvent.start_link
-    GenEvent.add_handler(manager, MyCommand, self)
+    GenEvent.add_handler(manager, MyCommand, self())
 
     :ok = GenEvent.sync_notify(manager, {{:command, "unknown_command", "hello world"}, {}})
     assert GenEvent.which_handlers(manager) == [MyCommand]

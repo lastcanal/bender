@@ -17,11 +17,11 @@ defmodule Bender.Bot do
     end
 
     # Trigger first poll for events
-    GenServer.cast(self, :poll_matrix)
+    GenServer.cast(self(), :poll_matrix)
     {:ok, %{session: session, rooms: rooms, event_manager: event_manager, from: nil, commands: commands}}
   end
 
-  def handle_cast(:poll_matrix, state = %{session: session = %Matrix.Session{}, event_manager: event_manager, from: from}) do
+  def handle_cast(:poll_matrix, state = %{session: session = %{}, event_manager: event_manager, from: from}) do
 
     # Get latest events
     events = Matrix.Client.events!(session, from)
@@ -42,7 +42,7 @@ defmodule Bender.Bot do
     end
 
     # Poll again for events
-    GenServer.cast(self, :poll_matrix)
+    GenServer.cast(self(), :poll_matrix)
 
     {:noreply, state}
   end
@@ -59,7 +59,7 @@ defmodule Bender.Bot do
     Process.monitor(event_manager)
 
     Enum.each commands, fn(c) ->
-      :ok = GenEvent.add_mon_handler(event_manager, c, self)
+      :ok = GenEvent.add_mon_handler(event_manager, c, self())
     end
 
     event_manager

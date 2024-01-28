@@ -5,28 +5,28 @@ defmodule Matrix.Client do
     Poison.decode!(response.body, as: Matrix.Session)
   end
 
-  def join!(session, room_name) do
-    room_response = HTTPoison.post!("https://#{session.home_server}/_matrix/client/api/v1/join/#{room_name}?access_token=#{session.access_token}", "", [], timeout: 10_000)
+  def join!(%{ "home_server" => home_server, "access_token" => access_token }, room_name) do
+    room_response = HTTPoison.post!("https://#{home_server}/_matrix/client/api/v1/join/#{room_name}?access_token=#{access_token}", "", [], timeout: 10_000)
     Poison.decode!(room_response.body, as: Matrix.Room)
   end
 
-  def events!(session, from \\ nil) do
-    params = [timeout: 30000, access_token: session.access_token]
+  def events!(%{ "home_server" => home_server, "access_token" => access_token }, from \\ nil) do
+    params = [timeout: 30000, access_token: access_token]
 
     if from do
       params = Dict.put params, :from, from
     end
 
-    response = HTTPoison.get!("https://#{session.home_server}/_matrix/client/api/v1/events", ["Accept": "application/json"], params: params, recv_timeout: 40000, timeout: 10_000)
+    response = HTTPoison.get!("https://#{home_server}/_matrix/client/api/v1/events", ["Accept": "application/json"], params: params, recv_timeout: 40000, timeout: 10_000)
 
     data = Poison.decode!(response.body)
     Matrix.ResponseConstructer.events(data)
   end
 
-  def post!(session = %Matrix.Session{}, room = %Matrix.Room{}, message, msg_type \\ "m.text", event_type \\ "m.room.message") do
+  def post!(%{ "home_server" => home_server, "access_token" => access_token }, room = %Matrix.Room{}, message, msg_type \\ "m.text", event_type \\ "m.room.message") do
     data = %{msgtype: msg_type, body: message}
 
-    response = HTTPoison.post!("https://#{session.home_server}/_matrix/client/api/v1/rooms/#{room.room_id}/send/#{event_type}?access_token=#{session.access_token}", Poison.encode!(data))
+    response = HTTPoison.post!("https://#{home_server}/_matrix/client/api/v1/rooms/#{room.room_id}/send/#{event_type}?access_token=#{access_token}", Poison.encode!(data))
 
     Poison.decode!(response.body, as: Matrix.EventId)
   end
